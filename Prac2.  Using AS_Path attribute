@@ -1,0 +1,114 @@
+Select slot : Slot 0 :- NM4T
+	         
+Configuration of Smile :-
+Smile # config t
+Smile(config) # interface loopback 0
+Smile(config-if) # ip address 10.1.1.1 255.255.255.0
+Smile(config-if) # exit
+Smile(config) #interface serial 0/0
+Smile(config-if) # ip address 192.168.1.1 255.255.255.0
+Smile(config-if) # no shutdown
+Smile(config) #exit
+Configuration of ISP :-
+ISP # config t
+ISP (config) # interface loopback 0
+ISP (config-if) # ip address 10.2.2.1 255.255.255.0
+ISP (config-if) # exit
+ISP (config) #interface serial 0/0
+ISP (config-if) # ip address 192.168.1.2 255.255.255.0
+ISP (config-if) # no shutdown
+ISP (config) #exit
+ISP (config) #interface serial 0/1
+ISP (config-if) # ip address 192.168.2.1 255.255.255.0
+ISP (config-if) # no shutdown
+ISP (config) #exit
+
+Configuration of CustRtr:-
+CustRtr # config t
+CustRtr(config) # interface loopback 0
+CustRtr(config-if) # ip address 10.3.3.1 255.255.255.0
+CustRtr (config-if) # exit
+CustRtr(config) #interface serial 0/1
+CustRtr(config-if) # ip address 192.168.2.2 255.255.255.0
+CustRtr(config-if) # no shutdown
+CustRtr(config) #exit
+
+Configuration of BGP on  Smile :-
+Smile # config t
+Smile(config) # router bgp 100
+Smile(config-router) # neighbor 192.168.1.2 remote-as 300 
+Smile(config-router) # network 10.1.1.0 mask 255.255.255.0
+Smile(config-router) # exit
+
+Configuration of BGP on  ISP :-
+ISP # config t
+ISP (config) # router bgp 300
+ISP (config-router) # neighbor 192.168.1.1 remote-as 100 
+ISP (config-router) # neighbor 192.168.2.2 remote-as 65000 
+ISP (config-router) # network 10.2.2.0 mask 255.255.255.0
+ISP (config-router) # exit
+
+Configuration of BGP on  CustRtr :-
+CustRtr # config t
+CustRtr (config) # router bgp 65000
+CustRtr (config-router) # neighbor 192.168.2.1 remote-as 300 
+CustRtr (config-router) # network 10.3.3.0 mask 255.255.255.0
+CustRtr (config-router) # exit
+
+Verifying The Bgp Neighbors on ISP Router
+ISP # show ip bg neighbors
+
+Removing the Private AS on Smile 
+Smile # show ip route 
+Smile # ping 
+Protocol [ip] :
+Target IP Address : 10.3.3.1 
+Repeat count [5] :
+Datagram size [100] :
+Timeout in seconds [2] :
+Extended commands [n] : y
+Source address or interface : 10.1.1.11 
+Type of service [0] :
+Set DF bit in IP Header ? [no] :
+Validate reply data? [no] :
+Data pattern [0Xabcd] :
+Loose , Strict, Record, Timestamp, Verbose [none]:
+Sweep range of sizes [n] :
+
+Smile # show ip bgp
+
+ISP
+ISP # config t
+ISP (config) # router bgp 300
+ISP (config-router) # neighbor 192.168.1.1 remove-private-as
+ISP (config-router) # exit
+ISP (config) # exit
+ISP # clear ip bgp *
+ 
+SMILE 
+Smile # show ip bgp
+
+Configuring AS_PATH Attribute
+ISP # config t
+ISP (config) # ip as-path access-list 1 deny ^100$
+ISP (config) # ip as-path access-list 1 permit .*
+ISP (config) # router bgp 300
+ISP(config) # neighbor 192.168.2.2 filter-list 1 out
+ISP (config) # exit
+ISP # exit
+ISP # clear ip bgp *
+ISP # show ip route 
+
+Check Routing Table for Custrtr it should nnot hav 10.1.1.0 in its routing table 
+CustRtr # show ip route 
+
+Verifying that the filter is working on ISP
+ISP # show ip bgp regexp ^100$
+
+Pinging all the Address from ISP it will successful for all
+ISP #  tclsh
+ISP (tcl) # foreach address {10.1.1.1 10.2.2.1 10.3.3.3.1 192.168.1.1 192.168.2.2) {ping $address}
+
+Pinging all the Address from CustRtr it will be failure for Smile but successful for ISP
+CustRtr # tclsh
+CustRtr (tcl) # foreach address {10.1.1.1 10.2.2.1 10.3.3.1 192.168.1.1 192.168.1.2 192.168.2.1} {ping $address}
