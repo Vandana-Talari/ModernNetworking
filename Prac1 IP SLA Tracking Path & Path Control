@@ -1,0 +1,65 @@
+PRACTICAL 1 : 
+IP SLA Tracking & Path Control 
+
+ 
+
+Select slot : Slot 0 :- C7200-IO-FE
+	         Slot 1 :- PA-FE-TX
+Configuration of R1:-
+R1 # config t
+R1 (config) #interface fastethernet0/0
+R1 (config-if) # ip address 10.0.0.1 255.255.255.0
+R1 (config-if) # no shutdown
+R1 (config-if) # exit
+R1 (config) # router rip
+R1 (config-router) # version 2
+R1 (config-router) # network 10.0.0.0 
+R1 (config-router) # exit
+R1 (config) # ip sla 1
+R1 (config-ip-sla) # time
+R1 (config-ip-sla) # icmp-echo 10.0.1.2
+R1(config-ip-sla-echo) # timeout 1000
+R1 (config-ip-sla-echo) # frequency 3
+R1 (config-ip-sla-echo) # exit
+R1 (config) # ip sla schedule 1 life forever start-time now 
+R1 (config) # track 1 rtr 1 reachability
+R1 (config-track) # exit
+R1 (config) # ip route 0.0.0.0 0.0.0.0 10.0.0.2 track 1
+R1 (config) # ip route 0.0.0.0 0.0.0.0 10.0.0.1.2 10
+R1(config) # exit
+
+R2
+Configuration of R2:-
+R2 # config t
+R2 (config) #interface fastethernet0/0
+R2 (config-if) # ip address 10.0.0.2 255.255.255.0
+R2 (config-if) # no shutdown
+R2 (config-if) # exit
+R2 (config) #interface fastethernet1/0 
+R2 (config-if) # ip address 10.0.1.1 255.255.255.0
+R2 (config-if) # no shutdown
+R2 (config-if) # exit
+R2 (config) # router rip
+R2 (config-router) # version 2
+R2 (config-router) # network 10.0.0.0 
+R2 (config-router) # network 10.0.1.0
+R2 (config-router) # exit
+
+
+R3
+R3 # config t
+R3 (config) #interface fastethernet0/0
+R3 (config-if) # ip address 10.0.1.2 255.255.255.0
+R3 (config-if) # no shutdown
+R3 (config-if) # exit
+R3 (config) # router rip
+R3 (config-router) # version 2
+R3 (config-router) # network 10.0.0.0 
+R3 (config-router) # exit
+
+R1
+To See Output
+R1 # show ip route
+R1 # show track
+R1 # show ip sla statistics
+R1 # ping 10.0.0.2
